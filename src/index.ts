@@ -11,31 +11,44 @@ const existsAsync: (path: string) => Promise<boolean> = (path: string) => new Pr
 export interface IFallbackDirectoryResolverPluginOptions {
     directories?: string[];
     prefix?: string;
+    extensions?: string[];
+    getRegex?: (prefix:string) => string;
+}
+
+export interface IDirectoryResolverPluginOptions {
+    directories: string[];
+    prefix: string;
+    extensions: string[];
+    getRegex: (prefix:string) => string;
 }
 
 export class FallbackDirectoryResolverPlugin {
-    public static defaultOptions: IFallbackDirectoryResolverPluginOptions = {
+    public static defaultOptions: IDirectoryResolverPluginOptions = {
+        extensions: [],
         directories: [],
         prefix: "fallback",
+        getRegex: (prefix) => `^#${prefix}#/`,
     };
 
-    private options: IFallbackDirectoryResolverPluginOptions;
+    private options: IDirectoryResolverPluginOptions;
     private pathRegex: RegExp;
 
     private cache: { [key: string]: Promise<string> };
 
     public constructor(options: IFallbackDirectoryResolverPluginOptions = {}) {
         this.options = Object.assign(FallbackDirectoryResolverPlugin.defaultOptions, options);
-        this.pathRegex = new RegExp(`^#${this.options.prefix}#/`);
+        this.pathRegex = new RegExp(this.options.getRegex(this.options.prefix));
         this.cache = {};
+    }
+
+    public pathMatchesPrefix(request: string): boolean {
+        return !!request.match(this.pathRegex);
     }
 
     public apply(resolver: any) {
         resolver.plugin("module", (request: any, callback: () => void) => {
-            if (request.request.match(this.pathRegex)) {
-                const req = request.request.replace(this.pathRegex, "");
-
-                this.resolveComponentPath(req).then(
+            if (this.pathMatchesPrefix(request.request)) {
+                this.resolveComponentPath(request.request).then(
                     (resolvedComponentPath: string) => {
                         const obj = {
                             directory: request.directory,
@@ -56,11 +69,28 @@ export class FallbackDirectoryResolverPlugin {
         });
     }
 
-    public resolveComponentPath(reqPath: string): Promise<string> {
+    public pathsCombinations(reqPath: string, directories: string[], extensions?: string[]): string[] {
+        const paths = directories
+            .map((dir: string) => path.resolve(path.resolve(dir), reqPath))
+            .reduce((prev, path) => {
+                prev.push(path);
+                if (extensions) {
+                    extensions.forEach((ext) => prev.push(path + ext));
+                }
+
+                return prev;
+            }, []);
+
+        return paths;
+    }
+
+    public resolveComponentPath(path: string): Promise<string> {
+        const reqPath = path.replace(this.pathRegex, "");
         if (!this.cache[reqPath]) {
-            if (this.options.directories) {
+            const options = this.options;
+            if (options.directories) {
                 this.cache[reqPath] = Promise.filter(
-                    this.options.directories.map((dir: string) => path.resolve(path.resolve(dir), reqPath)),
+                    this.pathsCombinations(reqPath, options.directories, options.extensions),
                     (item: string) => existsAsync(item).then((exists: boolean) => exists).catch(() => false),
                 ).any();
             } else {

@@ -1,13 +1,23 @@
 export interface IFallbackDirectoryResolverPluginOptions {
     directories?: string[];
     prefix?: string;
+    extensions?: string[];
+    getRegex?: (prefix: string) => string;
+}
+export interface IDirectoryResolverPluginOptions {
+    directories: string[];
+    prefix: string;
+    extensions: string[];
+    getRegex: (prefix: string) => string;
 }
 export declare class FallbackDirectoryResolverPlugin {
-    static defaultOptions: IFallbackDirectoryResolverPluginOptions;
+    static defaultOptions: IDirectoryResolverPluginOptions;
     private options;
     private pathRegex;
     private cache;
     constructor(options?: IFallbackDirectoryResolverPluginOptions);
+    pathMatchesPrefix(request: string): boolean;
     apply(resolver: any): void;
-    resolveComponentPath(reqPath: string): Promise<string>;
+    pathsCombinations(reqPath: string, directories: string[], extensions?: string[]): string[];
+    resolveComponentPath(path: string): Promise<string>;
 }

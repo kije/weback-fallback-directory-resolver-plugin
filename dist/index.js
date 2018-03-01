@@ -9,14 +9,16 @@ const existsAsync = (path) => new Promise((resolve) => {
 class FallbackDirectoryResolverPlugin {
     constructor(options = {}) {
         this.options = Object.assign(FallbackDirectoryResolverPlugin.defaultOptions, options);
-        this.pathRegex = new RegExp(`^#${this.options.prefix}#/`);
+        this.pathRegex = new RegExp(this.options.getRegex(this.options.prefix));
         this.cache = {};
+    }
+    pathMatchesPrefix(request) {
+        return !!request.match(this.pathRegex);
     }
     apply(resolver) {
         resolver.plugin("module", (request, callback) => {
-            if (request.request.match(this.pathRegex)) {
-                const req = request.request.replace(this.pathRegex, "");
-                this.resolveComponentPath(req).then((resolvedComponentPath) => {
+            if (this.pathMatchesPrefix(request.request)) {
+                this.resolveComponentPath(request.request).then((resolvedComponentPath) => {
                     const obj = {
                         directory: request.directory,
                         path: request.path,
@@ -34,10 +36,24 @@ class FallbackDirectoryResolverPlugin {
             }
         });
     }
-    resolveComponentPath(reqPath) {
+    pathsCombinations(reqPath, directories, extensions) {
+        const paths = directories
+            .map((dir) => path.resolve(path.resolve(dir), reqPath))
+            .reduce((prev, path) => {
+            prev.push(path);
+            if (extensions) {
+                extensions.forEach((ext) => prev.push(path + ext));
+            }
+            return prev;
+        }, []);
+        return paths;
+    }
+    resolveComponentPath(path) {
+        const reqPath = path.replace(this.pathRegex, "");
         if (!this.cache[reqPath]) {
-            if (this.options.directories) {
-                this.cache[reqPath] = Promise.filter(this.options.directories.map((dir) => path.resolve(path.resolve(dir), reqPath)), (item) => existsAsync(item).then((exists) => exists).catch(() => false)).any();
+            const options = this.options;
+            if (options.directories) {
+                this.cache[reqPath] = Promise.filter(this.pathsCombinations(reqPath, options.directories, options.extensions), (item) => existsAsync(item).then((exists) => exists).catch(() => false)).any();
             }
             else {
                 this.cache[reqPath] = Promise.reject("No Fallback directories!");
@@ -47,8 +63,10 @@ class FallbackDirectoryResolverPlugin {
     }
 }
 FallbackDirectoryResolverPlugin.defaultOptions = {
+    extensions: [],
     directories: [],
     prefix: "fallback",
+    getRegex: (prefix) => `^#${prefix}#/`,
 };
 exports.FallbackDirectoryResolverPlugin = FallbackDirectoryResolverPlugin;
 module.exports = FallbackDirectoryResolverPlugin;
