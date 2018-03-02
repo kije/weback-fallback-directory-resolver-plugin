@@ -2,12 +2,6 @@ const Promise = require("bluebird");
 const fs = require("fs");
 const path = require("path");
 
-const existsAsync: (path: string) => Promise<boolean> = (path: string) => new Promise(
-    (resolve: (result: boolean) => void) => {
-        fs.exists(path, resolve);
-    }
-);
-
 export interface IFallbackDirectoryResolverPluginOptions {
     directories?: string[];
     prefix?: string;
@@ -33,7 +27,7 @@ export class FallbackDirectoryResolverPlugin {
     private options: IDirectoryResolverPluginOptions;
     private pathRegex: RegExp;
 
-    private cache: { [key: string]: Promise<string> };
+    private cache: { [key: string]: string | null };
 
     public constructor(options: IFallbackDirectoryResolverPluginOptions = {}) {
         this.options = Object.assign(FallbackDirectoryResolverPlugin.defaultOptions, options);
@@ -48,21 +42,21 @@ export class FallbackDirectoryResolverPlugin {
     public apply(resolver: any) {
         resolver.plugin("module", (request: any, callback: () => void) => {
             if (this.pathMatchesPrefix(request.request)) {
-                this.resolveComponentPath(request.request).then(
-                    (resolvedComponentPath: string) => {
+                const resolvedComponentPath = this.resolveComponentPath(request.request);
+
+                if (resolvedComponentPath) {
                         const obj = {
                             directory: request.directory,
                             path: request.path,
                             query: request.query,
                             request: resolvedComponentPath,
                         };
+
                         resolver.doResolve("resolve", obj, `resolve ${request.request} to ${resolvedComponentPath}`, callback);
-                    },
-                    () => {
+                } else {
                         // todo info
                         callback();
-                    },
-                );
+                }
             } else {
                 callback();
             }
@@ -84,17 +78,17 @@ export class FallbackDirectoryResolverPlugin {
         return paths;
     }
 
-    public resolveComponentPath(path: string): Promise<string> {
+    public resolveComponentPath(path: string): string | null {
         const reqPath = path.replace(this.pathRegex, "");
-        if (!this.cache[reqPath]) {
+        if (this.cache[reqPath] === undefined) {
             const options = this.options;
             if (options.directories) {
-                this.cache[reqPath] = Promise.filter(
-                    this.pathsCombinations(reqPath, options.directories, options.extensions),
-                    (item: string) => existsAsync(item).then((exists: boolean) => exists).catch(() => false),
-                ).any();
+                this.cache[reqPath] =
+                    this.pathsCombinations(reqPath, options.directories, options.extensions).filter(
+                        (item: string) => fs.existsSync(item)
+                    )[0] || null;
             } else {
-                this.cache[reqPath] = Promise.reject("No Fallback directories!");
+                this.cache[reqPath] = null;
             }
         }
 

@@ -2085,6 +2085,12 @@ vinyl@^1.0.0, vinyl@^1.1.0, vinyl@^1.2.0:
     clone-stats "^0.0.1"
     replace-ext "0.0.1"
 
+webpack-fallback-directory-resolver-plugin@cipix2000/webpack-fallback-directory-resolver-plugin:
+  version "0.1.4"
+  resolved "https://codeload.github.com/cipix2000/webpack-fallback-directory-resolver-plugin/tar.gz/d6777fb86525db2d0640161024656587a2e53a3c"
+  dependencies:
+    bluebird "^3.5.0"
+
 which@^1.2.12:
   version "1.3.0"
   resolved "https://registry.yarnpkg.com/which/-/which-1.3.0.tgz#ff04bdfc010ee547d780bec38e1ac1c2777d253a"

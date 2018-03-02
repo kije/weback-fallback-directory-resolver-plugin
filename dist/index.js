@@ -3,9 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const Promise = require("bluebird");
 const fs = require("fs");
 const path = require("path");
-const existsAsync = (path) => new Promise((resolve) => {
-    fs.exists(path, resolve);
-});
 class FallbackDirectoryResolverPlugin {
     constructor(options = {}) {
         this.options = Object.assign(FallbackDirectoryResolverPlugin.defaultOptions, options);
@@ -18,7 +15,8 @@ class FallbackDirectoryResolverPlugin {
     apply(resolver) {
         resolver.plugin("module", (request, callback) => {
             if (this.pathMatchesPrefix(request.request)) {
-                this.resolveComponentPath(request.request).then((resolvedComponentPath) => {
+                const resolvedComponentPath = this.resolveComponentPath(request.request);
+                if (resolvedComponentPath) {
                     const obj = {
                         directory: request.directory,
                         path: request.path,
@@ -26,10 +24,11 @@ class FallbackDirectoryResolverPlugin {
                         request: resolvedComponentPath,
                     };
                     resolver.doResolve("resolve", obj, `resolve ${request.request} to ${resolvedComponentPath}`, callback);
-                }, () => {
+                }
+                else {
                     // todo info
                     callback();
-                });
+                }
             }
             else {
                 callback();
@@ -50,13 +49,14 @@ class FallbackDirectoryResolverPlugin {
     }
     resolveComponentPath(path) {
         const reqPath = path.replace(this.pathRegex, "");
-        if (!this.cache[reqPath]) {
+        if (this.cache[reqPath] === undefined) {
             const options = this.options;
             if (options.directories) {
-                this.cache[reqPath] = Promise.filter(this.pathsCombinations(reqPath, options.directories, options.extensions), (item) => existsAsync(item).then((exists) => exists).catch(() => false)).any();
+                this.cache[reqPath] =
+                    this.pathsCombinations(reqPath, options.directories, options.extensions).filter((item) => fs.existsSync(item))[0] || null;
             }
             else {
-                this.cache[reqPath] = Promise.reject("No Fallback directories!");
+                this.cache[reqPath] = null;
             }
         }
         return this.cache[reqPath];

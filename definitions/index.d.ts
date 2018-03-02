@@ -19,5 +19,5 @@ export declare class FallbackDirectoryResolverPlugin {
     pathMatchesPrefix(request: string): boolean;
     apply(resolver: any): void;
     pathsCombinations(reqPath: string, directories: string[], extensions?: string[]): string[];
-    resolveComponentPath(path: string): Promise<string>;
+    resolveComponentPath(path: string): string | null;
 }
