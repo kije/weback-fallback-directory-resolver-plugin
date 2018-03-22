@@ -8,7 +8,7 @@ const existsAsync = (path) => new Promise((resolve) => {
 });
 class FallbackDirectoryResolverPlugin {
     constructor(options = {}) {
-        this.options = Object.assign(FallbackDirectoryResolverPlugin.defaultOptions, options);
+        this.options = Object.assign({}, FallbackDirectoryResolverPlugin.defaultOptions, options);
         this.pathRegex = new RegExp(`^#${this.options.prefix}#/`);
         this.cache = {};
     }
