@@ -5,7 +5,7 @@ const fs = require("fs");
 const path = require("path");
 class FallbackDirectoryResolverPlugin {
     constructor(options = {}) {
-        this.options = Object.assign(FallbackDirectoryResolverPlugin.defaultOptions, options);
+        this.options = Object.assign({}, FallbackDirectoryResolverPlugin.defaultOptions, options);
         this.pathRegex = new RegExp(this.options.getRegex(this.options.prefix));
         this.cache = {};
     }

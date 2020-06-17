@@ -30,7 +30,7 @@ export class FallbackDirectoryResolverPlugin {
     private cache: { [key: string]: string | null };
 
     public constructor(options: IFallbackDirectoryResolverPluginOptions = {}) {
-        this.options = Object.assign(FallbackDirectoryResolverPlugin.defaultOptions, options);
+        this.options = Object.assign({}, FallbackDirectoryResolverPlugin.defaultOptions, options);
         this.pathRegex = new RegExp(this.options.getRegex(this.options.prefix));
         this.cache = {};
     }
