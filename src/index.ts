@@ -40,6 +40,48 @@ export class FallbackDirectoryResolverPlugin {
     }
 
     public apply(resolver: any) {
+        if (resolver.ensureHook) {
+            this.applyWebpackV4(resolver);
+        } else {
+            this.applyWebpackV3(resolver);
+        }
+    }
+
+    private applyWebpackV4(resolver: any): void {
+        const target = resolver.ensureHook("resolve");
+
+        const resolve = (request: any, resolveContext: any, callback: () => void) => {
+            if (this.pathMatchesPrefix(request.request)) {
+                const resolvedComponentPath = this.resolveComponentPath(request.request);
+
+                if (resolvedComponentPath) {
+                        const obj = {
+                            directory: request.directory,
+                            path: request.path,
+                            query: request.query,
+                            request: resolvedComponentPath,
+                        };
+
+                        resolver.doResolve(
+                            target,
+                            obj,
+                            `resolve ${request.request} to ${resolvedComponentPath}`,
+                            resolveContext,
+                            callback,
+                        );
+                } else {
+                        // todo info
+                        callback();
+                }
+            } else {
+                callback();
+            }
+        };
+
+        resolver.getHook("module").tapAsync("ThemeResolverPlugin", resolve);
+    }
+
+    private applyWebpackV3(resolver: any) {
         resolver.plugin("module", (request: any, callback: () => void) => {
             if (this.pathMatchesPrefix(request.request)) {
                 const resolvedComponentPath = this.resolveComponentPath(request.request);

@@ -13,6 +13,39 @@ class FallbackDirectoryResolverPlugin {
         return !!request.match(this.pathRegex);
     }
     apply(resolver) {
+        if (resolver.ensureHook) {
+            this.applyWebpackV4(resolver);
+        }
+        else {
+            this.applyWebpackV3(resolver);
+        }
+    }
+    applyWebpackV4(resolver) {
+        const target = resolver.ensureHook("resolve");
+        const resolve = (request, resolveContext, callback) => {
+            if (this.pathMatchesPrefix(request.request)) {
+                const resolvedComponentPath = this.resolveComponentPath(request.request);
+                if (resolvedComponentPath) {
+                    const obj = {
+                        directory: request.directory,
+                        path: request.path,
+                        query: request.query,
+                        request: resolvedComponentPath,
+                    };
+                    resolver.doResolve(target, obj, `resolve ${request.request} to ${resolvedComponentPath}`, resolveContext, callback);
+                }
+                else {
+                    // todo info
+                    callback();
+                }
+            }
+            else {
+                callback();
+            }
+        };
+        resolver.getHook("module").tapAsync("ThemeResolverPlugin", resolve);
+    }
+    applyWebpackV3(resolver) {
         resolver.plugin("module", (request, callback) => {
             if (this.pathMatchesPrefix(request.request)) {
                 const resolvedComponentPath = this.resolveComponentPath(request.request);
