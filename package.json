@@ -1,6 +1,6 @@
 {
   "name": "webpack-fallback-directory-resolver-plugin",
-  "version": "0.1.4-sl.1",
+  "version": "0.1.4-sl.2",
   "description": "Webpack Resolver plugin to resolve modules and files through a fallback chain at compile time.",
   "main": "dist/index.js",
   "repository": "https://github.com/kije/webpack-fallback-directory-resolver-plugin.git",
