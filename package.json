@@ -1,6 +1,6 @@
 {
   "name": "webpack-fallback-directory-resolver-plugin",
-  "version": "0.1.4",
+  "version": "0.1.4-sl.2",
   "description": "Webpack Resolver plugin to resolve modules and files through a fallback chain at compile time.",
   "main": "dist/index.js",
   "repository": "https://github.com/kije/webpack-fallback-directory-resolver-plugin.git",
@@ -31,16 +31,16 @@
     "webpack": ">= 1.0.0"
   },
   "dependencies": {
-    "bluebird": "^3.5.0"
+    "bluebird": "^3.7.2"
   },
   "devDependencies": {
     "@types/bluebird": "^3.5.11",
     "@types/node": "^8.0.30",
     "@types/webpack": "^3.0.11",
-    "gulp": "^3.9.1",
-    "gulp-cli": "^1.4.0",
-    "gulp-typescript": "^3.2.2",
-    "gulp-watch": "^4.3.11",
+    "gulp": "^4.0.2",
+    "gulp-cli": "^2.3.0",
+    "gulp-typescript": "^5.0.1",
+    "gulp-watch": "^5.0.1",
     "merge2": "^1.2.0",
     "tslint": "^5.7.0",
     "typescript": "^2.5.2"

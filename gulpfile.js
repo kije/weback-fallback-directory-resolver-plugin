@@ -24,5 +24,3 @@ gulp.task('watch', () => {
         gulp.run('build');
     });
 });
-
-gulp.task('default', ['watch']);
